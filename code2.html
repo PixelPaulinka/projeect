@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Код 2</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        pre {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        code {
+            font-family: Consolas, monospace;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            background: #6a11cb;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        nav {
+            background: #7c4dff;
+            padding: 10px;
+            text-align: center;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 18px;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .content {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        footer {
+            background: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+    </header>
+    <nav>
+        <a href="index.html">Главная</a>
+        <a href="code1.html">Код 1</a>
+        <a href="code2.html">Код 2</a>
+        <a href="code3.html">Код 3</a>
+        <a href="comparison.html">Сравнение</a>
+    </nav>
+    <div class="container">
+        <h1>Код второй программы</h1>
+        <pre><code class="language-python">
+import sys
+import requests
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit, QLabel, QComboBox
+from PyQt5.QtCore import Qt
+api_token = "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"
+headers = {"Authorization": f"Bearer {api_token}"}
+emotion_model_url = "https://api-inference.huggingface.co/models/MaxKazak/ruBert-base-russian-emotion-detection"
+translations = {
+    "Русский": {
+        "title": "🧠 Анализ эмоций",
+        "enter_text": "Введите текст для анализа эмоций...",
+        "analyze": "🔍 Анализировать",
+        "paste": "📋 Вставить",
+        "clear": "🧹 Очистить",
+        "no_text": "❗ Пожалуйста, введите текст для анализа.",
+        "error": "⚠️ Ошибка: ",
+        "no_emotion": "⚠️ Не удалось определить эмоции.",
+        "emotion_distribution": "🔍 Распределение эмоций:",
+        "dark_theme": "Темная тема",
+        "light_theme": "Светлая тема"
+    },
+    "English": {
+        "title": "🧠 Emotion Analysis",
+        "enter_text": "Enter text for emotion analysis...",
+        "analyze": "🔍 Analyze",
+        "paste": "📋 Paste",
+        "clear": "🧹 Clear",
+        "no_text": "❗ Please enter text for analysis.",
+        "error": "⚠️ Error: ",
+        "no_emotion": "⚠️ Could not determine emotions.",
+        "emotion_distribution": "🔍 Emotion distribution:",
+        "dark_theme": "Dark theme",
+        "light_theme": "Light theme"
+    }
+}
+emotion_labels = {
+    "joy": {"Русский": "😊 Радость", "English": "😊 Joy"},
+    "sadness": {"Русский": "😢 Грусть", "English": "😢 Sadness"},
+    "anger": {"Русский": "😠 Злость", "English": "😠 Anger"},
+    "surpise": {"Русский": "😲 Удивление", "English": "😲 Surprise"},
+    "disgust": {"Русский": "🤢 Отвращение", "English": "🤢 Disgust"},
+    "fear": {"Русский": "😨 Страх", "English": "😨 Fear"},
+    "neutral": {"Русский": "😐 Нейтральность", "English": "😐 Neutral"},
+    "interest": {"Русский": "🤔 Интерес", "English": "🤔 Interest"},
+    "guilt": {"Русский": "😔 Вина", "English": "😔 Guilt"}
+}
+def analyze_emotions():
+    text = text_entry.toPlainText().strip()
+    if not text:
+        result_label.setText(current_translation["no_text"])
+        return
+
+    emotion_data = {"inputs": text.lower()}
+
+    try:
+        response = requests.post(emotion_model_url, headers=headers, json=emotion_data)
+        response.raise_for_status()
+        emotion_result = response.json()
+
+        if emotion_result and isinstance(emotion_result, list) and emotion_result[0]:
+            display_emotions(emotion_result[0])
+        else:
+            result_label.setText(current_translation["no_emotion"])
+    except requests.exceptions.RequestException as e:
+        result_label.setText(f"{current_translation['error']} {e}")
+def display_emotions(emotions):
+    emotion_text = f"<b>{current_translation['emotion_distribution']}</b><br>"
+    for emotion in emotions:
+        label = emotion_labels.get(emotion['label'], {}).get(current_language, emotion['label'])
+        score = round(emotion['score'] * 100, 2)
+        emotion_text += f"• {label}: <b>{score}%</b><br>"
+    result_label.setText(emotion_text)
+def clear_text():
+    text_entry.clear()
+def paste_text():
+    text_entry.setText(app.clipboard().text())
+def switch_theme(theme):
+    if theme == current_translation["dark_theme"]:
+        window.setStyleSheet(dark_theme_css)
+    else:
+        window.setStyleSheet(light_theme_css)
+def switch_language(lang):
+    global current_language, current_translation
+    current_language = lang
+    current_translation = translations[lang]
+    window.setWindowTitle(current_translation["title"])
+    text_entry.setPlaceholderText(current_translation["enter_text"])
+    analyze_button.setText(current_translation["analyze"])
+    paste_button.setText(current_translation["paste"])
+    clear_button.setText(current_translation["clear"])
+    theme_switcher.clear()
+    theme_switcher.addItem(current_translation["dark_theme"])
+    theme_switcher.addItem(current_translation["light_theme"])
+
+
+light_theme_css = """
+    QWidget {
+        background: #ecf0f3;
+    }
+    QTextEdit {
+        background: #ecf0f3;
+        border: none;
+        border-radius: 20px;
+        padding: 25px;
+        font-size: 18px;
+        color: #333;
+    }
+    QPushButton {
+        background: #ecf0f3;
+        border: none;
+        border-radius: 20px;
+        padding: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+    }
+    QLabel {
+        font-size: 20px;
+        color: #333;
+    }
+    QComboBox {
+        background: #ecf0f3;
+        border-radius: 12px;
+        padding: 10px;
+        font-size: 16px;
+    }
+"""
+
+dark_theme_css = """
+    QWidget {
+        background: #1e1e1e;
+    }
+    QTextEdit {
+        background: #2c2c2c;
+        border: none;
+        border-radius: 20px;
+        padding: 25px;
+        font-size: 18px;
+        color: white;
+    }
+    QPushButton {
+        background: #2c2c2c;
+        border: none;
+        border-radius: 20px;
+        padding: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+    }
+    QLabel {
+        font-size: 20px;
+        color: #f0f0f0;
+    }
+    QComboBox {
+        background: #2c2c2c;
+        border-radius: 12px;
+        padding: 10px;
+        font-size: 16px;
+        color: white;
+    }
+"""
+app = QApplication(sys.argv)
+window = QWidget()
+window.setWindowTitle("🧠 Анализ эмоций")
+window.setGeometry(100, 100, 900, 600)
+language_switcher = QComboBox()
+language_switcher.addItem("Русский")
+language_switcher.addItem("English")
+language_switcher.currentIndexChanged.connect(lambda: switch_language(language_switcher.currentText()))
+theme_switcher = QComboBox()
+theme_switcher.currentIndexChanged.connect(lambda: switch_theme(theme_switcher.currentText()))
+text_entry = QTextEdit()
+text_entry.setPlaceholderText("Введите текст для анализа эмоций...")
+analyze_button = QPushButton("🔍 Анализировать")
+analyze_button.clicked.connect(analyze_emotions)
+paste_button = QPushButton("📋 Вставить")
+paste_button.clicked.connect(paste_text)
+clear_button = QPushButton("🧹 Очистить")
+clear_button.clicked.connect(clear_text)
+result_label = QLabel("")
+result_label.setAlignment(Qt.AlignCenter)
+result_label.setWordWrap(True)
+layout = QVBoxLayout()
+button_layout = QHBoxLayout()
+layout.addWidget(language_switcher, alignment=Qt.AlignRight)
+layout.addWidget(theme_switcher, alignment=Qt.AlignRight)
+layout.addWidget(text_entry)
+button_layout.addWidget(analyze_button)
+button_layout.addWidget(paste_button)
+button_layout.addWidget(clear_button)
+layout.addLayout(button_layout)
+layout.addWidget(result_label, alignment=Qt.AlignCenter)
+window.setLayout(layout)
+current_language = "Русский"
+switch_language(current_language)
+switch_theme("Светлая тема")
+window.show()
+sys.exit(app.exec_())
+        </code></pre>
+    </div>
+
+</body>
+</html>

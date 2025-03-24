@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Код 1</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        pre {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        code {
+            font-family: Consolas, monospace;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            background: #6a11cb;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        nav {
+            background: #7c4dff;
+            padding: 10px;
+            text-align: center;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 18px;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .content {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        footer {
+            background: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+    </header>
+    <nav>
+        <a href="index.html">Главная</a>
+        <a href="code1.html">Код 1</a>
+        <a href="code2.html">Код 2</a>
+        <a href="code3.html">Код 3</a>
+        <a href="comparison.html">Сравнение</a>
+    </nav>
+    <div class="container">
+        <h1>Код первой программы</h1>
+        <pre><code class="language-python">
+import spacy
+import nltk
+import matplotlib.pyplot as plt
+import seaborn as sns
+from tkinter import Tk, Text, END, messagebox
+from tkinter import ttk
+import platform
+
+nlp = spacy.load("ru_core_news_sm")
+nltk.download('stopwords')
+stop_words = set(nltk.corpus.stopwords.words('russian'))
+
+emotion_keywords = {
+    'Злость': ['злость', 'гнев', 'раздражение', 'агрессия', 'ненависть', 'обида', 'злобный', 'враждебность'],
+    'Страх': ['страх', 'паника', 'угроза', 'боязнь', 'ужас', 'тревога', 'нервничать', 'беспокойство'],
+    'Радость': ['радость', 'счастье', 'восторг', 'наслаждение', 'довольный', 'улыбка', 'веселье', 'триумф'],
+    'Грусть': ['грусть', 'печаль', 'тоска', 'разочарование', 'слёзы', 'усталость', 'депрессия', 'скорбь'],
+    'Удивление': ['удивление', 'шок', 'неожиданно', 'потрясение', 'изумление', 'великолепие', 'поразительно']
+}
+
+def process_text(text):
+    doc = nlp(text.lower())
+    lemmas = [token.lemma_ for token in doc if token.text not in stop_words and token.pos_ in ["NOUN", "ADJ", "VERB"]]
+    return ' '.join(lemmas)
+
+def analyze_emotions(text):
+    emotions = {emotion: 0 for emotion in emotion_keywords}
+    text = process_text(text)
+    for emotion, keywords in emotion_keywords.items():
+        for keyword in keywords:
+            emotions[emotion] += text.count(keyword)
+    return emotions
+
+def visualize_emotions(emotions):
+    labels, values = list(emotions.keys()), list(emotions.values())
+    plt.figure(figsize=(12, 6))
+    sns.barplot(x=labels, y=values, palette='viridis')
+    plt.title("Распределение эмоций в тексте", fontsize=16, fontweight='bold')
+    plt.ylabel('Частота', fontsize=14)
+    plt.xlabel('Эмоции', fontsize=14)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+def get_text_from_clipboard():
+    if platform.system() == "Windows":
+        import win32clipboard
+        win32clipboard.OpenClipboard()
+        text = win32clipboard.GetClipboardData()
+        win32clipboard.CloseClipboard()
+        return text
+
+def create_gui():
+    root = Tk()
+    root.title("Анализ эмоций в тексте")
+    root.geometry("800x600")
+    root.configure(bg='#222222')
+
+    style = ttk.Style()
+    style.theme_use('clam')
+    style.configure('TButton', font=('Helvetica', 12), padding=6)
+    style.configure('TLabel', font=('Helvetica', 12), background='#222222', foreground='#ffffff')
+    style.configure('TFrame', background='#222222')
+
+    text_frame = ttk.Frame(root)
+    text_frame.pack(padx=20, pady=10, fill='both', expand=True)
+
+    text_box = Text(text_frame, height=10, wrap='word', font=('Helvetica', 12), bg='#333333', fg='#ffffff', insertbackground='white')
+    text_box.pack(padx=10, pady=10, fill='both', expand=True)
+
+    button_frame = ttk.Frame(root)
+    button_frame.pack(pady=10)
+
+    def on_analyze_click():
+        text = text_box.get("1.0", END)
+        if text.strip():
+            emotions = analyze_emotions(text)
+            visualize_emotions(emotions)
+        else:
+            messagebox.showwarning("Предупреждение", "Введите текст для анализа.")
+
+    analyze_button = ttk.Button(button_frame, text="Проанализировать", command=on_analyze_click)
+    analyze_button.pack(side='left', padx=5)
+
+    def on_paste_click():
+        text_from_clipboard = get_text_from_clipboard()
+        text_box.delete("1.0", END)
+        text_box.insert("1.0", text_from_clipboard)
+
+    paste_button = ttk.Button(button_frame, text="Вставить текст из буфера", command=on_paste_click)
+    paste_button.pack(side='left', padx=5)
+
+    def on_clear_click():
+        text_box.delete("1.0", END)
+
+    clear_button = ttk.Button(button_frame, text="Очистить", command=on_clear_click)
+    clear_button.pack(side='left', padx=5)
+
+    def on_ctrl_v(event):
+        text_from_clipboard = get_text_from_clipboard()
+        text_box.delete("1.0", END)
+        text_box.insert("1.0", text_from_clipboard)
+
+    root.bind("<Control-v>", on_ctrl_v)
+    root.mainloop()
+
+if __name__ == "__main__":
+    create_gui()
+
+        </code></pre>
+    </div>
+
+</body>
+</html>
